@@ -12,8 +12,8 @@ using randevuappapi.Data;
 namespace randevuappapi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251111175545_FixAppointmentCascade")]
-    partial class FixAppointmentCascade
+    [Migration("20251111183318_Add")]
+    partial class Add
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
