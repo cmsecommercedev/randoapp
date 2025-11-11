@@ -42,6 +42,10 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<ITokenManager, TokenManager>();
 
+// register managers
+builder.Services.AddScoped<IBusinessManager, BusinessManager>();
+builder.Services.AddScoped<IEmployeeManager, EmployeeManager>();
+builder.Services.AddScoped<IAppointmentManager, AppointmentManager>();
 
 builder.Services.AddControllersWithViews();
 
@@ -66,18 +70,15 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+
+app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
-else
-{
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "RandevuApp API v1");
+    options.RoutePrefix = string.Empty; // => https://localhost:5001/ açınca swagger gelsin
+});
+
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
