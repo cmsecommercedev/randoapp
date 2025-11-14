@@ -112,9 +112,7 @@ public class AccountController : ControllerBase
         {
             new Claim("FullName", user.FullName ?? ""),
             new Claim("Email", user.Email ?? ""),
-            new Claim("ProfilePhotoUrl", user.ProfilePhotoUrl ?? ""),
-            new Claim("Latitude", user.Latitude?.ToString() ?? ""),
-            new Claim("Longitude", user.Longitude?.ToString() ?? "")
+            new Claim("ProfilePhotoUrl", user.ProfilePhotoUrl ?? "")
         };
 
         var existingClaims = await _userManager.GetClaimsAsync(user);

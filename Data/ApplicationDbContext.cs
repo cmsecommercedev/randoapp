@@ -24,6 +24,7 @@ namespace randevuappapi.Data
         public DbSet<WorkingTimeSlotException> WorkingTimeSlotExceptions => Set<WorkingTimeSlotException>();
 
         public DbSet<UserSettings> UserSettings { get; set; }
+        public DbSet<AppointmentReview> AppointmentReviews { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

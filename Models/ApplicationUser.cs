@@ -11,8 +11,6 @@ namespace randevuappapi.Models
 
         // Profil bilgileri
         public string? ProfilePhotoUrl { get; set; }
-        public double? Latitude { get; set; }
-        public double? Longitude { get; set; }
         public virtual UserSettings? UserSettings { get; set; }
 
 

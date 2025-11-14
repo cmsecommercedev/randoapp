@@ -1,3 +1,4 @@
+using randevuappapi.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -33,4 +34,10 @@ public class Business
     public ICollection<WorkingHour> WorkingHours { get; set; } = new List<WorkingHour>();
 
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    // Kullanıcı ile ilişki
+    [Required]
+    public string OwnerId { get; set; } = null!; // Foreign key
+    [ForeignKey(nameof(OwnerId))]
+    public ApplicationUser Owner { get; set; } = null!;
 }
