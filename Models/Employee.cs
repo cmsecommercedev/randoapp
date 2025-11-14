@@ -14,5 +14,7 @@ public class Employee
     public Guid BusinessId { get; set; }
     public Business? Business { get; set; }
 
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }

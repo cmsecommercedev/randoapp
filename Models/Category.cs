@@ -7,4 +7,6 @@ public class Category
 
     [Required, MaxLength(100)]
     public string Name { get; set; } = null!;
+
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 }

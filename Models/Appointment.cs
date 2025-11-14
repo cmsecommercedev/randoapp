@@ -33,6 +33,8 @@ public class Appointment
 
     public string? Notes { get; set; }
 
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
     // müşteri bilgilerini basit tutuyoruz (daha sonra AspNetUsers ile ilişkilendirilebilir)
     public Guid? CustomerId { get; set; }
     public string? CustomerName { get; set; }

@@ -36,8 +36,7 @@ public class BusinessManager : IBusinessManager
             Description = dto.Description,
             Phone = dto.Phone,
             Address = dto.Address,
-            CategoryId = dto.CategoryId,
-            PhotoUrlsJson = dto.PhotoUrls is null ? null : System.Text.Json.JsonSerializer.Serialize(dto.PhotoUrls)
+            CategoryId = dto.CategoryId
         };
 
         _db.Businesses.Add(entity);

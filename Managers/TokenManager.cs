@@ -1,15 +1,11 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using randevuappapi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-
-public interface ITokenManager
-{
-    string GenerateJwtToken(ApplicationUser user);
-    string GenerateRefreshToken();
-}
 
 public class TokenManager : ITokenManager
 {
@@ -20,23 +16,28 @@ public class TokenManager : ITokenManager
         _configuration = configuration;
     }
 
-    public string GenerateJwtToken(ApplicationUser user)
+    public async Task<string> GenerateJwtTokenAsync(ApplicationUser user, UserManager<ApplicationUser> userManager)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        // AspNetUserClaims tablosundan claim’leri al
+        var userClaims = await userManager.GetClaimsAsync(user);
+
+        // Ek olarak Identity User bilgilerini de token’a dahil et
+        var claims = new List<Claim>(userClaims)
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? string.Empty),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("userId", user.Id)
         };
 
         var token = new JwtSecurityToken(
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(15),
+            expires: DateTime.UtcNow.AddMinutes(30),
             signingCredentials: creds
         );
 

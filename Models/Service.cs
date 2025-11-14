@@ -13,4 +13,8 @@ public class Service
 
     public Guid BusinessId { get; set; }
     public Business? Business { get; set; }
+
+    public Guid? EmployeeId { get; set; }
+    public Employee? Employee { get; set; }
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 }

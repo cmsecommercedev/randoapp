@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using randevuappapi.Data;
 
@@ -11,9 +12,11 @@ using randevuappapi.Data;
 namespace randevuappapi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251112182040_AddUserSettings")]
+    partial class AddUserSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,9 +33,6 @@ namespace randevuappapi.Migrations
 
                     b.Property<Guid>("BusinessId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
@@ -84,19 +84,7 @@ namespace randevuappapi.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("float");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("float");
-
-                    b.Property<string>("MainPhotoUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -107,6 +95,9 @@ namespace randevuappapi.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PhotoUrlsJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
@@ -114,44 +105,11 @@ namespace randevuappapi.Migrations
                     b.ToTable("Businesses");
                 });
 
-            modelBuilder.Entity("BusinessPhoto", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BusinessId");
-
-                    b.ToTable("BusinessPhoto");
-                });
-
             modelBuilder.Entity("Category", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -171,9 +129,6 @@ namespace randevuappapi.Migrations
 
                     b.Property<Guid>("BusinessId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -335,14 +290,8 @@ namespace randevuappapi.Migrations
                     b.Property<Guid>("BusinessId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("int");
-
-                    b.Property<Guid?>("EmployeeId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -350,14 +299,11 @@ namespace randevuappapi.Migrations
                         .HasColumnType("nvarchar(150)");
 
                     b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessId");
-
-                    b.HasIndex("EmployeeId");
 
                     b.ToTable("Services");
                 });
@@ -374,9 +320,6 @@ namespace randevuappapi.Migrations
                     b.Property<TimeSpan>("Close")
                         .HasColumnType("time");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("Day")
                         .HasColumnType("int");
 
@@ -388,75 +331,6 @@ namespace randevuappapi.Migrations
                     b.HasIndex("BusinessId");
 
                     b.ToTable("WorkingHours");
-                });
-
-            modelBuilder.Entity("WorkingTimeSlot", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Day")
-                        .HasColumnType("int");
-
-                    b.Property<Guid?>("EmployeeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<TimeSpan>("End")
-                        .HasColumnType("time");
-
-                    b.Property<TimeSpan>("Start")
-                        .HasColumnType("time");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BusinessId");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.ToTable("WorkingTimeSlots");
-                });
-
-            modelBuilder.Entity("WorkingTimeSlotException", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("EmployeeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<TimeSpan>("End")
-                        .HasColumnType("time");
-
-                    b.Property<string>("Reason")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<TimeSpan>("Start")
-                        .HasColumnType("time");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BusinessId");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.ToTable("WorkingTimeSlotExceptions");
                 });
 
             modelBuilder.Entity("randevuappapi.Models.ApplicationUser", b =>
@@ -481,17 +355,11 @@ namespace randevuappapi.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("float");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("float");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -512,9 +380,6 @@ namespace randevuappapi.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<string>("ProfilePhotoUrl")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RefreshToken")
                         .HasColumnType("nvarchar(max)");
@@ -621,17 +486,6 @@ namespace randevuappapi.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("BusinessPhoto", b =>
-                {
-                    b.HasOne("Business", "Business")
-                        .WithMany("Photos")
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Business");
-                });
-
             modelBuilder.Entity("Employee", b =>
                 {
                     b.HasOne("Business", "Business")
@@ -702,13 +556,7 @@ namespace randevuappapi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId");
-
                     b.Navigation("Business");
-
-                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("WorkingHour", b =>
@@ -720,40 +568,6 @@ namespace randevuappapi.Migrations
                         .IsRequired();
 
                     b.Navigation("Business");
-                });
-
-            modelBuilder.Entity("WorkingTimeSlot", b =>
-                {
-                    b.HasOne("Business", "Business")
-                        .WithMany()
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId");
-
-                    b.Navigation("Business");
-
-                    b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("WorkingTimeSlotException", b =>
-                {
-                    b.HasOne("Business", "Business")
-                        .WithMany()
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId");
-
-                    b.Navigation("Business");
-
-                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("randevuappapi.Models.UserSettings", b =>
@@ -772,8 +586,6 @@ namespace randevuappapi.Migrations
                     b.Navigation("Appointments");
 
                     b.Navigation("Employees");
-
-                    b.Navigation("Photos");
 
                     b.Navigation("Services");
 

@@ -17,12 +17,20 @@ public class Business
     public Guid CategoryId { get; set; }
     public Category? Category { get; set; }
 
-    // foto url listesi basit tutuyoruz: json string veya ayrı tablo tercih edilebilir
-    public string? PhotoUrlsJson { get; set; }
+    // Ana dükkan fotoğrafı
+    public string? MainPhotoUrl { get; set; }
+
+    // Konum bilgisi
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+
+    // Fotoğraf tablosu ile ilişki
+    public ICollection<BusinessPhoto> Photos { get; set; } = new List<BusinessPhoto>();
 
     public ICollection<Employee> Employees { get; set; } = new List<Employee>();
     public ICollection<Service> Services { get; set; } = new List<Service>();
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
-
     public ICollection<WorkingHour> WorkingHours { get; set; } = new List<WorkingHour>();
+
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 }

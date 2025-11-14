@@ -4,10 +4,17 @@ namespace randevuappapi.Models
 {
     public class ApplicationUser : IdentityUser
     {
-        // Ek kullanıcı özellikleri eklemek isterseniz buraya ekleyebilirsiniz.
         public string? FullName { get; set; }
-        // Mobil için refresh token
+        public string? OtpCode { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
+
+        // Profil bilgileri
+        public string? ProfilePhotoUrl { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public virtual UserSettings? UserSettings { get; set; }
+
+
     }
 }
