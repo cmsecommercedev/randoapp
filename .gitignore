@@ -269,3 +269,4 @@ Microsoft.TemplateEngine.VC.db
 /appsettings.Development.json
 /appsettings.json
 /appsettings.Test.json
+/web.config
