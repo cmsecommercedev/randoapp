@@ -41,7 +41,7 @@ public class BusinessController : ControllerBase
     public async Task<ActionResult<BusinessCreateResponseDto>> CreateBusinessWithPhoto([FromForm] BusinessCreateWithPhotoDto dto)
     {
         // JWT'den userId'yi al
-        var userId = User.FindFirstValue("userId");
+        var userId = User.FindFirstValue("UserId");
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized("User not authenticated");

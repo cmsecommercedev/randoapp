@@ -133,6 +133,7 @@ public class AccountController : ControllerBase
         var defaultClaims = new List<Claim>
         {
             new Claim("FullName", user.FullName ?? ""),
+            new Claim("UserId", user.Id ?? ""),
             new Claim("Email", user.Email ?? ""),
             new Claim("UserRole", userRole),
             new Claim("ProfilePhotoUrl", user.ProfilePhotoUrl ?? "")
