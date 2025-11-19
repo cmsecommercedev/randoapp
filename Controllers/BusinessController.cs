@@ -150,7 +150,7 @@ public class BusinessController : ControllerBase
             BusinessPhotoUrl = businessPhotoUrl
         };
 
-        return CreatedAtAction(nameof(GetBusiness), new { id = business.Id }, response);
+        return CreatedAtAction(nameof(Get), new { id = business.Id }, response);
     }
 
     [HttpGet("categories")]
@@ -196,6 +196,7 @@ public class BusinessController : ControllerBase
     {
         // JWT'den userId'yi al
         var userId = User.FindFirstValue("UserId");
+
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized("User not authenticated");
@@ -209,7 +210,7 @@ public class BusinessController : ControllerBase
         }
 
         // Kullanıcının işletme sahibi olup olmadığını kontrol et
-        if (business.OwnerId != userId && !User.IsInRole("Admin"))
+        if (business.OwnerId != userId)
         {
             return Forbid("You are not authorized to edit this business");
         }
@@ -229,24 +230,18 @@ public class BusinessController : ControllerBase
         return Ok("Business updated successfully");
     }
 
-    [HttpGet("get-business")]
+    [HttpGet("{id:guid}")]
     [Authorize(Roles = "Owner,Admin")]
-    [ProducesResponseType(typeof(BusinessCreateResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(BusinessDetailWithPhotosDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetBusiness()
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Get(Guid id)
     {
-        // JWT'den userId'yi al
-        var userId = User.FindFirstValue("UserId");
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized("User not authenticated");
-        }
-
-        // Kullanıcının sahip olduğu işletmeyi al
         var business = await _context.Businesses
-            .Where(b => b.OwnerId == userId)
-            .Select(b => new BusinessCreateResponseDto
+            .Include(b => b.Category)
+            .Include(b => b.Photos)
+            .Where(b => b.Id == id)
+            .Select(b => new BusinessDetailWithPhotosDto
             {
                 Id = b.Id,
                 Name = b.Name,
@@ -254,15 +249,109 @@ public class BusinessController : ControllerBase
                 Phone = b.Phone,
                 Address = b.Address,
                 CategoryId = b.CategoryId,
-                MainPhotoUrl = b.MainPhotoUrl
+                CategoryName = b.Category.Name,
+                CategoryIcon = b.Category.Icon,
+                MainPhotoUrl = b.MainPhotoUrl,
+                Latitude = b.Latitude,
+                Longitude = b.Longitude,
+                Photos = b.Photos.Select(p => new BusinessPhotoDto
+                {
+                    Id = p.Id,
+                    Url = p.Url,
+                    Description = p.Description
+                }).ToList()
             })
             .FirstOrDefaultAsync();
 
         if (business == null)
         {
-            return NotFound("No business found for the authenticated user");
+            return NotFound("Business not found");
         }
 
         return Ok(business);
+    }
+
+
+    [HttpPost("add-photo/{businessId:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AddPhoto(Guid businessId, [FromForm] IFormFile photo, string? description)
+    {
+        // İşletmeyi kontrol et
+        var business = await _context.Businesses.FindAsync(businessId);
+        if (business == null)
+        {
+            return NotFound("Business not found");
+        }
+
+        // Kullanıcının işletme sahibi olup olmadığını kontrol et
+        var userId = User.FindFirstValue("UserId");
+        if (business.OwnerId != userId && !User.IsInRole("Admin"))
+        {
+            return Forbid("You are not authorized to add a photo to this business");
+        }
+
+        // Fotoğrafı yükle
+        string photoUrl;
+        try
+        {
+            var fileExtension = Path.GetExtension(photo.FileName);
+            var fileName = $"business/{Guid.NewGuid()}{fileExtension}";
+            var contentType = photo.ContentType;
+            using (var stream = photo.OpenReadStream())
+            {
+                await _r2Manager.UploadFileAsync(fileName, stream, contentType);
+            }
+            photoUrl = _r2Manager.GetFileUrl(fileName);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Photo upload failed: {ex.Message}");
+        }
+
+        // Fotoğraf kaydını oluştur
+        var businessPhoto = new BusinessPhoto
+        {
+            BusinessId = business.Id,
+            Url = photoUrl,
+            Description = description
+        };
+
+        _context.BusinessPhotos.Add(businessPhoto);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { photoId = businessPhoto.Id, photoUrl });
+    }
+
+    [HttpDelete("remove-photo/{photoId:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemovePhoto(Guid photoId)
+    {
+        // Fotoğrafı kontrol et
+        var photo = await _context.BusinessPhotos.FindAsync(photoId);
+        if (photo == null)
+        {
+            return NotFound("Photo not found");
+        }
+
+        // Kullanıcının işletme sahibi olup olmadığını kontrol et
+        var userId = User.FindFirstValue("UserId");
+        if (photo.Business.OwnerId != userId && !User.IsInRole("Admin"))
+        {
+            return Forbid("You are not authorized to remove this photo");
+        }
+
+        // Fotoğrafı sil
+        _context.BusinessPhotos.Remove(photo);
+        await _context.SaveChangesAsync();
+
+        return Ok("Photo removed successfully");
     }
 }
