@@ -213,4 +213,91 @@ public class AccountController : ControllerBase
             refreshTokenExpiry = user.RefreshTokenExpiryTime
         });
     }
+
+    [AllowAnonymous]
+    [HttpPost("verify-customer-otp")]
+    public async Task<IActionResult> VerifyCustomerOtp(string phonenumber, string otp)
+    {
+        return await VerifyOtpWithRole(phonenumber, otp, "Customer");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("verify-business-otp")]
+    public async Task<IActionResult> VerifyBusinessOtp(string phonenumber, string otp)
+    {
+        return await VerifyOtpWithRole(phonenumber, otp, "Owner");
+    }
+
+    // Ortak OTP doğrulama metodu (rol ile)
+    private async Task<IActionResult> VerifyOtpWithRole(string phonenumber, string otp, string role)
+    {
+        if (string.IsNullOrWhiteSpace(phonenumber) || string.IsNullOrWhiteSpace(otp))
+            return BadRequest("Telefon ve OTP gerekli.");
+
+        var user = await _userManager.FindByNameAsync(phonenumber);
+
+        if (user == null)
+        {
+            // Kullanıcı yoksa yeni bir kullanıcı oluştur ve ilgili rolü ata
+            string dummyEmail = $"{phonenumber}@agx-labs.com";
+            string dummyPassword = "DummyPassword123!";
+
+            user = new ApplicationUser
+            {
+                UserName = phonenumber,
+                Email = dummyEmail,
+                PhoneNumber = phonenumber,
+                PhoneNumberConfirmed = true,
+                OtpCode = null // OTP doğrulandıktan sonra sıfırlanır
+            };
+
+            var createResult = await _userManager.CreateAsync(user, dummyPassword);
+            if (!createResult.Succeeded)
+                return BadRequest(createResult.Errors.Select(e => e.Description));
+
+            // Rol ata
+            await _userManager.AddToRoleAsync(user, role);
+        }
+        else
+        {
+            // Kullanıcı varsa OTP doğrula
+            if (user.OtpCode != otp)
+                return BadRequest("Geçersiz OTP.");
+
+            user.PhoneNumberConfirmed = true;
+            user.OtpCode = null; // OTP doğrulandıktan sonra sıfırlanır
+        }
+
+        // Refresh token oluştur ve kaydet
+        user.RefreshToken = _tokenManager.GenerateRefreshToken();
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(30);
+        await _userManager.UpdateAsync(user);
+        var roles = await _userManager.GetRolesAsync(user);
+        var userRole = roles.FirstOrDefault() ?? "";
+        // Kullanıcı claim’leri ekle (eğer yoksa)
+        var defaultClaims = new List<Claim>
+         {
+             new Claim("FullName", user.FullName ?? ""),
+             new Claim("Email", user.Email ?? ""),
+             new Claim("UserRole", userRole ?? ""),
+             new Claim("ProfilePhotoUrl", user.ProfilePhotoUrl ?? "")
+         };
+
+        var existingClaims = await _userManager.GetClaimsAsync(user);
+        foreach (var claim in defaultClaims)
+        {
+            if (!existingClaims.Any(c => c.Type == claim.Type))
+                await _userManager.AddClaimAsync(user, claim);
+        }
+
+        // JWT oluştur
+        var accessToken = await _tokenManager.GenerateJwtTokenAsync(user, _userManager);
+
+        return Ok(new
+        {
+            accessToken,
+            refreshToken = user.RefreshToken,
+            refreshTokenExpiry = user.RefreshTokenExpiryTime
+        });
+    }
 }
