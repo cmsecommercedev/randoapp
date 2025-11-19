@@ -136,7 +136,9 @@ public class AccountController : ControllerBase
             new Claim("UserId", user.Id ?? ""),
             new Claim("Email", user.Email ?? ""),
             new Claim("UserRole", userRole),
-            new Claim("ProfilePhotoUrl", user.ProfilePhotoUrl ?? "")
+            new Claim("ProfilePhotoUrl", user.ProfilePhotoUrl ?? ""),
+            new Claim(ClaimTypes.Role, userRole)  // Authorize(Roles=..) için
+
         };
 
         var existingClaims = await _userManager.GetClaimsAsync(user);
