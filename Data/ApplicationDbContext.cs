@@ -15,6 +15,7 @@ namespace randevuappapi.Data
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
 
         public DbSet<Business> Businesses => Set<Business>();
+        public DbSet<BusinessPhoto> BusinessPhotos => Set<BusinessPhoto>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Employee> Employees => Set<Employee>();
         public DbSet<Service> Services => Set<Service>();
@@ -60,6 +61,13 @@ namespace randevuappapi.Data
                 .HasOne(w => w.Business)
                 .WithMany(b => b.WorkingHours)
                 .HasForeignKey(w => w.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // 📷 Business → BusinessPhotos
+            modelBuilder.Entity<BusinessPhoto>()
+                .HasOne(bp => bp.Business)
+                .WithMany(b => b.Photos)
+                .HasForeignKey(bp => bp.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // 📅 Appointment → Business

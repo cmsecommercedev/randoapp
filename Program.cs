@@ -5,6 +5,8 @@ using randevuappapi.Data;
 using randevuappapi.Models;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using randevuappapi.CloudflareManager;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +44,10 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<ITokenManager, TokenManager>();
 
+// Configure Cloudflare R2
+builder.Services.Configure<CloudflareR2Options>(builder.Configuration.GetSection("CloudflareR2"));
+builder.Services.AddScoped<CloudflareR2Manager>();
+
 // register managers
 builder.Services.AddScoped<IBusinessManager, BusinessManager>();
 builder.Services.AddScoped<IEmployeeManager, EmployeeManager>();
@@ -70,13 +76,47 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
-app.MapOpenApi();
+ 
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "RandevuApp API v1");
     options.RoutePrefix = string.Empty; // => https://localhost:5001/ açınca swagger gelsin
+});
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "RandevuApp API",
+        Version = "v1"
+    });
+
+    // JWT auth için security scheme
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Bearer {token} formatında giriniz"
+    });
+
+    // Global authorization requirement
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
 });
 
 

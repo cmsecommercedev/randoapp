@@ -64,6 +64,65 @@ public class AccountController : ControllerBase
         return Ok(new { message = "OTP gönderildi. Lütfen doğrulayın.", userId = user.Id });
     }
 
+    // ✅ REGISTER OWNER
+    [AllowAnonymous]
+    [HttpPost("register-owner")]
+    public async Task<IActionResult> RegisterOwner(string phonenumber, string fullName)
+    {
+        return await RegisterWithRole(phonenumber, fullName, "Owner");
+    }
+
+    // ✅ REGISTER EMPLOYEE
+    [AllowAnonymous]
+    [HttpPost("register-employee")]
+    public async Task<IActionResult> RegisterEmployee(string phonenumber, string fullName)
+    {
+        return await RegisterWithRole(phonenumber, fullName, "Employee");
+    }
+
+    // ✅ REGISTER CUSTOMER
+    [AllowAnonymous]
+    [HttpPost("register-customer")]
+    public async Task<IActionResult> RegisterCustomer(string phonenumber, string fullName)
+    {
+        return await RegisterWithRole(phonenumber, fullName, "Customer");
+    }
+
+    // Ortak register metodu (rol ile)
+    private async Task<IActionResult> RegisterWithRole(string phonenumber, string fullName, string role)
+    {
+        if (string.IsNullOrWhiteSpace(phonenumber))
+            return BadRequest("Telefon gerekli.");
+
+        string dummyEmail = $"{phonenumber}@agx-labs.com";
+        string dummyPassword = "DummyPassword123!";
+
+        var user = await _userManager.FindByNameAsync(phonenumber);
+        if (user != null)
+        {
+            user.OtpCode = "123456";
+            await _userManager.UpdateAsync(user);
+        }
+        else
+        {
+            user = new ApplicationUser
+            {
+                UserName = phonenumber,
+                Email = dummyEmail,
+                PhoneNumber = phonenumber,
+                FullName = fullName,
+                PhoneNumberConfirmed = false,
+                OtpCode = "123456"
+            };
+            var result = await _userManager.CreateAsync(user, dummyPassword);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors.Select(e => e.Description));
+            // Rol ata
+            await _userManager.AddToRoleAsync(user, role);
+        }
+        return Ok(new { message = "OTP gönderildi. Lütfen doğrulayın.", userId = user.Id });
+    }
+
     // ✅ LOGIN (OTP gönderimi)
     [AllowAnonymous]
     [HttpPost("login")]
