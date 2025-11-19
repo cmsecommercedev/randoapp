@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using randevuappapi.Data;
+using randevuappapi.Dtos.Business;
 using randevuappapi.Models;
-using System.Security.Claims;
 using System.IO;
+using System.Security.Claims;
 [ApiController]
 [Route("api/[controller]")]
 public class BusinessController : ControllerBase
@@ -21,19 +23,9 @@ public class BusinessController : ControllerBase
         _context = context;
         _r2Manager = r2Manager;
     }
+    
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _mgr.GetAllAsync());
-
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> Get(Guid id)
-    {
-        var item = await _mgr.GetByIdAsync(id);
-        if (item == null) return NotFound();
-        return Ok(item);
-    } 
-
-    [HttpPost("create-with-photo")]
+    [HttpPost("create-bussiness")]
     [Authorize(Roles = "Owner,Admin")]
     [ProducesResponseType(typeof(BusinessCreateResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -158,28 +150,119 @@ public class BusinessController : ControllerBase
             BusinessPhotoUrl = businessPhotoUrl
         };
 
-        return CreatedAtAction(nameof(Get), new { id = business.Id }, response);
+        return CreatedAtAction(nameof(GetBusiness), new { id = business.Id }, response);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateBusiness(string name, string description, string userId)
+    [HttpGet("categories")]
+    [Authorize(Roles = "Owner,Admin")]
+    [ProducesResponseType(typeof(IEnumerable<CategoryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAllCategories()
     {
+        // JWT'den userId'yi al
+        var userId = User.FindFirstValue("UserId");
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("User not authenticated");
+        }
+
+        // Kullanıcıyı kontrol et
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
         {
             return BadRequest("User not found");
         }
 
-        var business = new Business
-        {
-            Name = name,
-            Description = description,
-            OwnerId = user.Id
-        };
+        // Tüm kategorileri veritabanından al
+        var categories = await _context.Categories
+            .Select(category => new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Icon = category.Icon
+            })
+            .ToListAsync();
 
-        _context.Businesses.Add(business);
+        return Ok(categories);
+    }
+
+    [HttpPut("edit-business/{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EditBusiness(Guid id, [FromBody] BusinessEditDto dto)
+    {
+        // JWT'den userId'yi al
+        var userId = User.FindFirstValue("UserId");
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("User not authenticated");
+        }
+
+        // İşletmeyi kontrol et
+        var business = await _context.Businesses.FindAsync(id);
+        if (business == null)
+        {
+            return NotFound("Business not found");
+        }
+
+        // Kullanıcının işletme sahibi olup olmadığını kontrol et
+        if (business.OwnerId != userId && !User.IsInRole("Admin"))
+        {
+            return Forbid("You are not authorized to edit this business");
+        }
+
+        // İşletme bilgilerini güncelle
+        business.Name = dto.Name;
+        business.Description = dto.Description;
+        business.Phone = dto.Phone;
+        business.Address = dto.Address;
+        business.CategoryId = dto.CategoryId;
+        business.Latitude = dto.Latitude;
+        business.Longitude = dto.Longitude;
+
+        _context.Businesses.Update(business);
         await _context.SaveChangesAsync();
 
-        return Ok("Business created successfully");
+        return Ok("Business updated successfully");
+    }
+
+    [HttpGet("get-business")]
+    [Authorize(Roles = "Owner,Admin")]
+    [ProducesResponseType(typeof(BusinessCreateResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBusiness()
+    {
+        // JWT'den userId'yi al
+        var userId = User.FindFirstValue("UserId");
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("User not authenticated");
+        }
+
+        // Kullanıcının sahip olduğu işletmeyi al
+        var business = await _context.Businesses
+            .Where(b => b.OwnerId == userId)
+            .Select(b => new BusinessCreateResponseDto
+            {
+                Id = b.Id,
+                Name = b.Name,
+                Description = b.Description,
+                Phone = b.Phone,
+                Address = b.Address,
+                CategoryId = b.CategoryId,
+                MainPhotoUrl = b.MainPhotoUrl
+            })
+            .FirstOrDefaultAsync();
+
+        if (business == null)
+        {
+            return NotFound("No business found for the authenticated user");
+        }
+
+        return Ok(business);
     }
 }
