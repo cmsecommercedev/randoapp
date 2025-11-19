@@ -136,7 +136,8 @@ public class AccountController : ControllerBase
             return BadRequest("Telefon gerekli.");
 
         // OTP oluştur
-        var otp = new Random().Next(100000, 999999).ToString();
+        //var otp = new Random().Next(100000, 999999).ToString();
+            var otp = "123456";
 
         // OTP'yi cache'e kaydet (5 dakika süreyle)
         _cache.Set(phonenumber, otp, TimeSpan.FromMinutes(5));
