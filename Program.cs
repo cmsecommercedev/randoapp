@@ -82,6 +82,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<ITokenManager, TokenManager>();
 
+builder.Services.AddMemoryCache();
+
 // Configure Cloudflare R2
 builder.Services.Configure<CloudflareR2Options>(builder.Configuration.GetSection("CloudflareR2"));
 builder.Services.AddScoped<CloudflareR2Manager>();
